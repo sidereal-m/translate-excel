@@ -1,121 +1,120 @@
+import sys
 import pandas as pd
-from googletrans import Translator 
-import time
-import tkinter as tk
-from tkinter import messagebox
-from tkinter import filedialog
+from googletrans import Translator
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QComboBox
 
-def translate_text(text, source_lang, target_lang):
-    if pd.isna(text):  # Skip translation for blank cells
-        return ''
-    
-    try:
-        translated = translator.translate(text, src=source_lang, dest=target_lang)
-        time.sleep(0.5)
-        return text + ' ' + translated.text  # Append translation to existing text
-    except Exception as e:
-        print(f"Translation failed for text: {text}. Error: {e}")
-        return text
+class ExcelTranslator(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-def translate_and_save(file_path, source_lang, target_lang):
-    if not file_path:
-        messagebox.showerror("File Not Selected", "Please select an Excel file.")
-        return
-    
-    # Read all sheets in the Excel file
-    xls = pd.ExcelFile(file_path)
-    
-    translated_dfs = {}
+        self.setWindowTitle("Excel Translator")
+        self.setGeometry(100, 100, 400, 300)
 
-    for sheet_name in xls.sheet_names:
-        df = xls.parse(sheet_name)
+        self.translator = Translator()
 
-        # Use map to apply translation to each cell in the DataFrame
-        df_translated = df.apply(lambda col: col.map(lambda x: translate_text(x, source_lang, target_lang)))
+        self.setup_ui()
 
-        translated_dfs[sheet_name] = df_translated
+    def setup_ui(self):
+        self.label_header = QLabel("Excel Translator", self)
+        self.label_header.setGeometry(10, 10, 380, 30)
+        self.label_header.setStyleSheet("font-size: 14pt; background-color: lightblue;")
 
-    # Save the translated DataFrames to a new Excel file
-    output_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
-    if output_path:
-        with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-            for sheet_name, translated_df in translated_dfs.items():
-                translated_df.to_excel(writer, sheet_name=sheet_name, index=False)
-    
-    messagebox.showinfo("Translation Complete", "Translation and files saved successfully!")
+        self.label_file = QLabel("Select Target File:", self)
+        self.label_file.setGeometry(10, 50, 150, 20)
 
-def select_target_file():
-    target_file = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
-    if target_file:
-        target_file_path.delete(0, tk.END)
-        target_file_path.insert(0, target_file)
-        messagebox.showinfo("Selected File", f"Selected file: {target_file}")
+        self.file_path = QLabel("", self)
+        self.file_path.setGeometry(160, 50, 180, 20)
 
-# Language codes and their full names
-lang_dict = {
-    'Afrikaans': 'af', 'Albanian': 'sq', 'Amharic': 'am', 'Arabic': 'ar', 'Armenian': 'hy', 'Azerbaijani': 'az',
-    'Basque': 'eu', 'Belarusian': 'be', 'Bengali': 'bn', 'Bosnian': 'bs', 'Bulgarian': 'bg', 'Catalan': 'ca',
-    'Cebuano': 'ceb', 'Chichewa': 'ny', 'Chinese (Simplified)': 'zh-cn', 'Chinese (Traditional)': 'zh-tw',
-    'Corsican': 'co', 'Croatian': 'hr', 'Czech': 'cs', 'Danish': 'da', 'Dutch': 'nl', 'English': 'en', 'Esperanto': 'eo',
-    'Estonian': 'et', 'Filipino': 'tl', 'Finnish': 'fi', 'French': 'fr', 'Frisian': 'fy', 'Galician': 'gl',
-    'Georgian': 'ka', 'German': 'de', 'Greek': 'el', 'Gujarati': 'gu', 'Haitian Creole': 'ht', 'Hausa': 'ha',
-    'Hawaiian': 'haw', 'Hebrew': 'he', 'Hindi': 'hi', 'Hmong': 'hmn', 'Hungarian': 'hu', 'Icelandic': 'is',
-    'Igbo': 'ig', 'Indonesian': 'id', 'Irish': 'ga', 'Italian': 'it', 'Japanese': 'ja', 'Javanese': 'jv',
-    'Kannada': 'kn', 'Kazakh': 'kk', 'Khmer': 'km', 'Kinyarwanda': 'rw', 'Korean': 'ko', 'Kurdish (Kurmanji)': 'ku',
-    'Kyrgyz': 'ky', 'Lao': 'lo', 'Latin': 'la', 'Latvian': 'lv', 'Lithuanian': 'lt', 'Luxembourgish': 'lb',
-    'Macedonian': 'mk', 'Malagasy': 'mg', 'Malay': 'ms', 'Malayalam': 'ml', 'Maltese': 'mt', 'Maori': 'mi',
-    'Marathi': 'mr', 'Mongolian': 'mn', 'Burmese': 'my', 'Nepali': 'ne', 'Norwegian': 'no', 'Odia': 'or',
-    'Pashto': 'ps', 'Persian': 'fa', 'Polish': 'pl', 'Portuguese': 'pt', 'Punjabi': 'pa', 'Romanian': 'ro',
-    'Russian': 'ru', 'Samoan': 'sm', 'Scots Gaelic': 'gd', 'Serbian': 'sr', 'Sesotho': 'st', 'Shona': 'sn',
-    'Sindhi': 'sd', 'Sinhala': 'si', 'Slovak': 'sk', 'Slovenian': 'sl', 'Somali': 'so', 'Spanish': 'es',
-    'Sundanese': 'su', 'Swahili': 'sw', 'Swedish': 'sv', 'Tajik': 'tg', 'Tamil': 'ta', 'Tatar': 'tt', 'Telugu': 'te',
-    'Thai': 'th', 'Turkish': 'tr', 'Turkmen': 'tk', 'Ukrainian': 'uk', 'Urdu': 'ur', 'Uyghur': 'ug', 'Uzbek': 'uz',
-    'Vietnamese': 'vi', 'Welsh': 'cy', 'Xhosa': 'xh', 'Yiddish': 'yi', 'Yoruba': 'yo', 'Zulu': 'zu'
-}
+        self.btn_select_file = QPushButton("Select File", self)
+        self.btn_select_file.setGeometry(350, 50, 40, 20)
+        self.btn_select_file.clicked.connect(self.select_file)
 
-# UI setup
-root = tk.Tk()
-root.title("Excel Translator")
-root.geometry("400x350")  # Set initial width and height
+        self.label_source_lang = QLabel("Select Source Language:", self)
+        self.label_source_lang.setGeometry(10, 80, 150, 20)
 
-translator = Translator()
+        self.combo_source_lang = QComboBox(self)
+        self.combo_source_lang.setGeometry(160, 80, 180, 20)
+        self.populate_language_combobox(self.combo_source_lang)
 
-header_frame = tk.Frame(root, bg="light blue", padx=10, pady=10)
-header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.label_target_lang = QLabel("Select Target Language:", self)
+        self.label_target_lang.setGeometry(10, 110, 150, 20)
 
-header_label = tk.Label(header_frame, text="Excel Translator", font=("Arial", 14), bg="light blue")
-header_label.pack()
+        self.combo_target_lang = QComboBox(self)
+        self.combo_target_lang.setGeometry(160, 110, 180, 20)
+        self.populate_language_combobox(self.combo_target_lang)
 
-target_file_frame = tk.Frame(root)
-target_file_frame.grid(row=1, column=0, columnspan=2, pady=5)
+        self.btn_translate = QPushButton("Translate", self)
+        self.btn_translate.setGeometry(10, 150, 380, 30)
+        self.btn_translate.clicked.connect(self.translate_and_save)
 
-target_file_button = tk.Button(target_file_frame, text="Select Target File", command=select_target_file)
-target_file_button.pack(side=tk.LEFT, padx=5)
+    def populate_language_combobox(self, combo_box):
+        languages = [
+            'Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Azerbaijani', 'Basque', 'Belarusian', 'Bengali',
+            'Bosnian', 'Bulgarian', 'Catalan', 'Cebuano', 'Chichewa', 'Chinese (Simplified)', 'Chinese (Traditional)',
+            'Corsican', 'Croatian', 'Czech', 'Danish', 'Dutch', 'English', 'Esperanto', 'Estonian', 'Filipino', 'Finnish',
+            'French', 'Frisian', 'Galician', 'Georgian', 'German', 'Greek', 'Gujarati', 'Haitian Creole', 'Hausa', 'Hawaiian',
+            'Hebrew', 'Hindi', 'Hmong', 'Hungarian', 'Icelandic', 'Igbo', 'Indonesian', 'Irish', 'Italian', 'Japanese',
+            'Javanese', 'Kannada', 'Kazakh', 'Khmer', 'Kinyarwanda', 'Korean', 'Kurdish (Kurmanji)', 'Kyrgyz', 'Lao', 'Latin',
+            'Latvian', 'Lithuanian', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Maori',
+            'Marathi', 'Mongolian', 'Burmese', 'Nepali', 'Norwegian', 'Odia', 'Pashto', 'Persian', 'Polish', 'Portuguese',
+            'Punjabi', 'Romanian', 'Russian', 'Samoan', 'Scots Gaelic', 'Serbian', 'Sesotho', 'Shona', 'Sindhi', 'Sinhala',
+            'Slovak', 'Slovenian', 'Somali', 'Spanish', 'Sundanese', 'Swahili', 'Swedish', 'Tajik', 'Tamil', 'Tatar', 'Telugu',
+            'Thai', 'Turkish', 'Turkmen', 'Ukrainian', 'Urdu', 'Uyghur', 'Uzbek', 'Vietnamese', 'Welsh', 'Xhosa', 'Yiddish',
+            'Yoruba', 'Zulu'
+        ]
 
-target_file_path = tk.Entry(target_file_frame, width=40)
-target_file_path.pack(side=tk.LEFT)
+        combo_box.addItems(languages)
 
-source_lang_label = tk.Label(root, text="Select Source Language:")
-source_lang_label.grid(row=3, column=0, padx=10, sticky="w")
+    def select_file(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Select Excel File", "", "Excel Files (*.xlsx;*.xls)")
+        if file_path:
+            self.file_path.setText(file_path)
 
-var_source = tk.StringVar(root)
-var_source.set("German")  # Default source language: English
+    def translate_text(self, text, source_lang, target_lang):
+        if pd.isna(text):  # Skip translation for blank cells
+            return ''
 
-options_source = list(lang_dict.keys())
-dropdown_source = tk.OptionMenu(root, var_source, *options_source)
-dropdown_source.grid(row=3, column=1, sticky="ew")
+        try:
+            translated = self.translator.translate(text, src=source_lang, dest=target_lang)
+            return text + ' ' + translated.text  # Append translation to existing text
+        except Exception as e:
+            print(f"Translation failed for text: {text}. Error: {e}")
+            return text
 
-language_label = tk.Label(root, text="Select Target Language:")
-language_label.grid(row=4, column=0, padx=10, sticky="w")
+    def translate_and_save(self):
+        file_path = self.file_path.text()
+        source_lang = self.combo_source_lang.currentText()
+        target_lang = self.combo_target_lang.currentText()
 
-var_target = tk.StringVar(root)
-var_target.set("English")  # Default target language: German
+        if not file_path:
+            QMessageBox.warning(self, "File Not Selected", "Please select an Excel file.")
+            return
 
-options_target = list(lang_dict.keys())
-dropdown_target = tk.OptionMenu(root, var_target, *options_target)
-dropdown_target.grid(row=4, column=1, sticky="ew")
+        # Read all sheets in the Excel file
+        xls = pd.ExcelFile(file_path)
 
-button = tk.Button(root, text="Translate", command=lambda: translate_and_save(target_file_path.get(), var_source.get(), var_target.get()))
-button.grid(row=5, column=0, columnspan=2, pady=10)
+        translated_dfs = {}
 
-root.mainloop()
+        for sheet_name in xls.sheet_names:
+            df = xls.parse(sheet_name)
+
+            # Use map to apply translation to each cell in the DataFrame
+            df_translated = df.apply(lambda col: col.map(lambda x: self.translate_text(x, source_lang, target_lang)))
+
+            translated_dfs[sheet_name] = df_translated
+
+        # Save the translated DataFrames to a new Excel file
+        output_path, _ = QFileDialog.getSaveFileName(self, "Save Translated Excel File", "", "Excel Files (*.xlsx)")
+        if output_path:
+            with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+                for sheet_name, translated_df in translated_dfs.items():
+                    translated_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+            QMessageBox.information(self, "Translation Complete", "Translation and files saved successfully!")
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = ExcelTranslator()
+    window.show()
+    sys.exit(app.exec_())
