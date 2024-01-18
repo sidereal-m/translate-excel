@@ -20,20 +20,29 @@ def translate_and_save(file_path):
         messagebox.showerror("File Not Selected", "Please select an Excel file.")
         return
     
-    df = pd.read_excel(file_path)
-    column_name = entry.get()
-    target_lang = var.get()
+    # Read all sheets in the Excel file
+    xls = pd.ExcelFile(file_path)
     
-    if column_name in df.columns:
-        df['Translated'] = df[column_name].apply(lambda x: translate_text(x, target_lang))
-        output_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
-        if output_path:
-            df.to_excel(output_path, index=False)
-            messagebox.showinfo("Translation Complete", "Translation and file saved successfully!")
-        else:
-            messagebox.showerror("Error", "File save operation cancelled.")
-    else:
-        messagebox.showerror("Column Not Found", f"Column '{column_name}' not found in DataFrame.")
+    translated_dfs = {}
+    target_lang = var.get()
+
+    for sheet_name in xls.sheet_names:
+        df = xls.parse(sheet_name)
+        translated_df = df.copy()
+
+        for column_name in df.columns:
+            translated_df[f'{column_name}_Translated'] = df[column_name].apply(lambda x: translate_text(x, target_lang))
+
+        translated_dfs[sheet_name] = translated_df
+
+    # Save the translated DataFrames to a new Excel file
+    output_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
+    if output_path:
+        with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+            for sheet_name, translated_df in translated_dfs.items():
+                translated_df.to_excel(writer, sheet_name=sheet_name, index=False)
+    
+    messagebox.showinfo("Translation Complete", "Translation and files saved successfully!")
 
 def select_target_file():
     target_file = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
@@ -65,7 +74,7 @@ target_file_path = tk.Entry(target_file_frame, width=40)
 target_file_path.pack(side=tk.LEFT)
 
 label = tk.Label(root, text="Enter Column Name:")
-label.grid(row=2, column=0,columnspan=2, padx=5, sticky="w")
+label.grid(row=2, column=0, columnspan=2, padx=5, sticky="w")
 
 entry = tk.Entry(root, width=30)
 entry.grid(row=2, column=1, padx=5, sticky="ew")
