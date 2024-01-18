@@ -99,7 +99,7 @@ source_lang_label = tk.Label(root, text="Select Source Language:")
 source_lang_label.grid(row=3, column=0, padx=10, sticky="w")
 
 var_source = tk.StringVar(root)
-var_source.set("English")  # Default source language: English
+var_source.set("German")  # Default source language: English
 
 options_source = list(lang_dict.keys())
 dropdown_source = tk.OptionMenu(root, var_source, *options_source)
@@ -109,7 +109,7 @@ language_label = tk.Label(root, text="Select Target Language:")
 language_label.grid(row=4, column=0, padx=10, sticky="w")
 
 var_target = tk.StringVar(root)
-var_target.set("German")  # Default target language: German
+var_target.set("English")  # Default target language: German
 
 options_target = list(lang_dict.keys())
 dropdown_target = tk.OptionMenu(root, var_target, *options_target)
