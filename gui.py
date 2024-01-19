@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QComboBox, QVBoxLayout, QWidget, \
-    QTabWidget, QFormLayout, QApplication, QMessageBox, QTextBrowser
+    QTabWidget, QFormLayout, QApplication, QMessageBox, QTextBrowser, QProgressBar
 from logic import ExcelTranslatorLogic
 
 
@@ -22,6 +22,10 @@ class ExcelTranslatorGUI(QMainWindow):
         self.label_header = QLabel("Excel Translator", self)
         self.label_header.setStyleSheet("font-size: 14pt; background-color: lightblue;")
         layout.addWidget(self.label_header)
+
+        # Add progress bar
+        self.progress_bar = QProgressBar(self)
+        layout.addWidget(self.progress_bar)
 
         tab_widget = QTabWidget(self)
         layout.addWidget(tab_widget)
